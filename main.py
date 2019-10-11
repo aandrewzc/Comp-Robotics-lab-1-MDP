@@ -9,11 +9,11 @@ def get_actions():
 	pass
 
 
-def P_function():
+def P_function(s, a, s_):
 	pass
 
 
-def R_function():
+def R_function(s, a, s_):
 	pass
 
 
