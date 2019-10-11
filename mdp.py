@@ -99,6 +99,57 @@ class MDP:
 			pi = pi_
 
 
+	def value_iteration(self):
+		"""
+		Returns:
+			pi_star (dict)
+		"""
+		eps = 1e-6
+		R_3darray = np.zeros((self.NS,self.NA,self.NS))
+		P_3darray = np.zeros((self.NS,self.NA,self.NS))
+
+		for si, s in enumerate(self.states):
+			
+			for ai, a in enumerate(self.actions):
+			
+				for si_, s_ in enumerate(self.states):
+
+					R_3darray[si,ai,si_] = self.R_function(s, a, s_)
+					P_3darray[si,ai,si_] = self.P_function(s, a, s_)
+
+		V = np.zeros(self.NS)
+
+		while True:
+
+			# print(V)
+
+			V_ = ((P_3darray*R_3darray).sum(axis=2) + self.gamma*(P_3darray.dot(V))).max(axis=1)
+
+			if np.abs(V_-V).max() < eps:
+				break
+
+			V = V_
+
+
+		# Q = {}
+
+		# for si, s in enumerate(self.states):
+
+		# 	for ai, a in enumerate(self.actions):
+								
+		# 		Q[(s,a)] = P_3darray[si,ai,:].dot(R_3darray[si,ai,:]+self.gamma*V)
+
+		V_star = dict(zip(self.states, V))
+		
+		pi_star = ((P_3darray*R_3darray).sum(axis=2) + self.gamma*(P_3darray.dot(V))).argmax(axis=1)
+		pi_star = {self.states[i]:self.actions[pi_star[i]] for i in range(self.NS)}
+
+		# print(pi_star)
+		
+		return V_star, pi_star
+
+
+
 
 
 # test
@@ -120,6 +171,8 @@ if __name__ == "__main__":
 	mdp = MDP(states, actions, P_function, R_function, gamma)
 
 	# mdp.evaluate_policy({0:0, 1:0})
+
+	print(mdp.value_iteration())
 
 	print(mdp.policy_iteration())
 
