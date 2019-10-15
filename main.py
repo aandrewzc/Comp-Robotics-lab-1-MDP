@@ -168,6 +168,7 @@ def reward(s_x, s_y):
 #example input
 spot = np.array([(1,1,1),(1,2,2),(1,3,3),(2,3,5,),(2,4,10),(3,4,12),(3,5,4)])
 
+
 def plotter(spot):
     #x = [1,2,3]
     spot_x_y = []
@@ -178,17 +179,17 @@ def plotter(spot):
     spot_x_y = np.array(spot_x_y)
     
     #plot path
-    plt.plot(*spot_x_y.T)
+    plt.plot(*spot_x_y.T, color = 'b')
     
     #plot robot + orientation
     for i in spot:
-        plt.plot(i[0], i[1], marker=(3, 0, i[2]/12*360), markersize=20, linestyle='None')
+        plt.plot(i[0], i[1], marker=(3, 0, i[2]/12*360), markersize=20,markeredgewidth=1,markeredgecolor='r', markerfacecolor='None')
+
 
     plt.xlim([0,W-1])
     plt.ylim([0,L-1])
     plt.grid()
     plt.show()
-    plt.savefig("robotMap.jpg")
     
 
 plotter(spot)
