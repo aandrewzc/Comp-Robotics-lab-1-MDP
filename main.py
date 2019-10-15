@@ -1,5 +1,5 @@
 from mdp import MDP
-
+import matplotlib.pyplot as plt
 
 def get_states(L, W):
 	S = []
@@ -136,3 +136,59 @@ states = get_states(L, W)
 actions = get_actions()
 
 mdp = MDP(states, actions, P_function, R_function, gamma)
+
+
+##########################
+#reward function R(s)
+
+def reward(s_x, s_y):
+    #out of the world
+    if ( s_x >= L or s_y >= W): 
+        raise ValueError("Exceed World Size")
+        
+    #win!
+    if (s_x == 5 or s_y == 6):
+        return 1
+    
+    #boundary 
+    if (s_x == 0 or s_x == W-1 or s_y == 0 or s_y == L-1):
+        return -100
+    
+    #lane marker
+    if ((s_x == 3 and s_y == 4) or (s_x == 3 and s_y == 5) or (s_x == 3 and s_y == 6)): 
+        return -10
+    return 0
+
+
+##########################
+#plotter
+#receives input as a list of all previous states i.e. [(x1,y1,h1), (x2,y2,h2)...]
+#plots location and orientation of the robot throughout the entire time history
+
+#example input
+spot = np.array([(1,1,1),(1,2,2),(1,3,3),(2,3,5,),(2,4,10),(3,4,12),(3,5,4)])
+
+def plotter(spot):
+    #x = [1,2,3]
+    spot_x_y = []
+    for i in spot:
+        spot_x_y += [(i[0],i[1])]
+
+     
+    spot_x_y = np.array(spot_x_y)
+    
+    #plot path
+    plt.plot(*spot_x_y.T)
+    
+    #plot robot + orientation
+    for i in spot:
+        plt.plot(i[0], i[1], marker=(3, 0, i[2]/12*360), markersize=20, linestyle='None')
+
+    plt.xlim([0,W-1])
+    plt.ylim([0,L-1])
+    plt.grid()
+    plt.show()
+    plt.savefig("robotMap.jpg")
+    
+
+plotter(spot)
