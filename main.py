@@ -169,13 +169,24 @@ def reward(s_x, s_y):
 spot = np.array([(1,1,1),(1,2,2),(1,3,3),(2,3,5,),(2,4,10),(3,4,12),(3,5,4)])
 
 
+L = 8 #y
+W = 8 #x
+
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+
+
 def plotter(spot):
     #x = [1,2,3]
+    fig = plt.figure(figsize = (L,W))
+    ax = fig.add_subplot(1,1,1)
     spot_x_y = []
     for i in spot:
-        spot_x_y += [(i[0],i[1])]
+        spot_x_y += [(i[0]+0.5,i[1]+0.5)]
+        ax.arrow(i[0]+0.5,i[1]+0.5, 0.5*np.sin(i[2]*np.pi/6),0.5*np.cos(i[2]*np.pi/6), head_width = 0.1, head_length = 0.2, fc = 'k', ec = 'k')
 
-     
+    
     spot_x_y = np.array(spot_x_y)
     
     #plot path
@@ -183,13 +194,20 @@ def plotter(spot):
     
     #plot robot + orientation
     for i in spot:
-        plt.plot(i[0], i[1], marker=(3, 0, i[2]/12*360), markersize=20,markeredgewidth=1,markeredgecolor='r', markerfacecolor='None')
-
-
-    plt.xlim([0,W-1])
-    plt.ylim([0,L-1])
+        plt.plot(i[0]+0.5, i[1]+0.5, marker=(3, 0, 0), markersize=20,markeredgewidth=1,markeredgecolor='b', markerfacecolor='None')
+        
+    for i in range(0,8):
+        for j in range(0,8):
+            if (i == 0 or i == 7 or j == 0 or j == 7):
+                ax.add_patch(plt.Rectangle((i,j), width = 1, height = 1, angle=0.0, fill = True, facecolor = 'r'))
+            if (i == 3 and (j == 4 or j ==5 or j ==6)):
+                ax.add_patch(plt.Rectangle((i,j), width = 1, height = 1, angle=0.0, fill = True, facecolor = 'y',  alpha = 0.8))
+            if (i == 5 and j ==6):
+                ax.add_patch(plt.Rectangle((i,j), width = 1, height = 1, angle=0.0, fill = True, facecolor = 'g', alpha = 0.7))
+    plt.xlim([0,W])
+    plt.ylim([0,L])
     plt.grid()
+    plt.savefig("fig.jpg", dpi = 300)
     plt.show()
     
-
 plotter(spot)
