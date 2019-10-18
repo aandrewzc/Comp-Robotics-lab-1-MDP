@@ -120,6 +120,71 @@ def next_state(p_error, s, a):
 
 	return s_
 
+#Generate Initial policy
+def initial_policy(L,W):
+    pi0 = []
+    for x in range(L):
+        for y in range(W):
+            for h in range(12):
+                if x == 5 and y == 6:
+                    pi0.append([0,0])
+                    continue
+                if x == 5:
+                    if y < 6:
+                        if h in [11,0,1]:
+                            pi0.append([1,0])   #move forward, no turn
+                        elif h in [5,6,7]:
+                            pi0.append([-1,0])  #move backward, no turn
+                        elif h in [3,9]:
+                            pi0.append([1,1])   #move forward, increase by 1
+                        else:
+                            pi0.append([1,0])   #move forwad, no turn
+                            
+                    if y > 6:
+                        if h in [5,6,7]:
+                            pi0.append([1,0])   #move forward, no turn
+                        elif h in [11,0,1]:
+                            pi0.append([-1,0])  #move backward, no turn
+                        elif h in [3,9]:
+                            pi0.append([1,1])   #move forward, increase by 1
+                        else:
+                            pi0.append([1,0])   #move forwad, no turn
+                elif x < 5:
+                    if y == 7:
+                        if h in [2,3,4,5,6,7]:
+                            pi0.append([1,1])   #move forward, increase by 1
+                        else:
+                            pi0.append([-1,1])  #move backward, increase by 1
+                    else:  
+                        if h in [11,0,1,2,3,4]:
+                            pi0.append([1,1])   #move forward, increase by 1
+                        else:
+                            pi0.append([-1,1])  #move backward, increase by 1   
+                else:
+                    if y == 7:
+                        if h in [8,9,10,11,0,1]:
+                            pi0.append([1,1])   #move forward, increase by 1
+                        else:
+                            pi0.append([-1,1])  #move backward, increase by 1
+                    else:  
+                        if h in [5,6,7,8,9,10]:
+                            pi0.append([1,1])   #move forward, increase by 1
+                        else:
+                            pi0.append([-1,1])  #move backward, increase by 1                     
+    return pi0
+
+def path_generation(policy, s0, L, W):
+    path=[]
+    s = s0
+    s_ =  move(s, policy[(s[0]*W*12+s[1]*12+s[2])],L, W)
+    path.append(s)
+    path.append(s_)
+    while s_ != s:
+        s = s_
+        s_ =  move(s, policy[(s[0]*W*12+s[1]*12+s[2])],L, W)
+        path.append(s_)
+    return path
+
 
 gamma = 0.9
 
