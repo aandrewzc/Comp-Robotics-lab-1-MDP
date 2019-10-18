@@ -14,6 +14,8 @@ class MDP:
 
     """
 
+    # note that we consider a general reward function despite question requiring reward to only depend on s'
+
     def __init__(self, states, actions, P_function, R_function, gamma):
 
         self.states = states
@@ -35,7 +37,11 @@ class MDP:
             V function in the form of a dict mapping each s to V(s),
             Q function in the form of a dict mapping each (s,a) to Q(s,a)
         """
+
+        # Reward matrix induced by pi, R(i,j) = R_function(s_i, pi[s_i], s_j)
         R_matrix = np.zeros((self.NS, self.NS))
+
+        # Transition probability matrix induced by pi, P(i,j) = P_function(s_i, pi[s_i], s_j)
         P_matrix = np.zeros((self.NS, self.NS))
 
         for i, s in enumerate(self.states):
@@ -47,11 +53,18 @@ class MDP:
                 R_matrix[i,i_] = self.R_function(s, a, s_)
                 P_matrix[i,i_] = self.P_function(s, a, s_)
 
+        # eye(NS) corresponds to V coefficients in LHS of Bellman's equations
+        # and gamma*P corresponds to V coefficients in RHS
         A = np.eye(self.NS)-self.gamma*P_matrix
+
+        # constant terms in Bellman's equations; sum aong 1st axis corresponds to sum over s' in Bellman's equations
+        # * is elementwise product and not matrix multiplication; same as np.diag(P_matrix.mul(R_matrix.T))
         b = (P_matrix*R_matrix).sum(axis=1)
 
+        # np.linalg.solve solves Bellman's equations to give pi's value function
         V = dict(zip(self.states, np.linalg.solve(A,b)))
 
+        # action-value function
         Q = {}
 
         for s in self.states:
@@ -62,44 +75,53 @@ class MDP:
                 
                 for s_ in self.states:
 
+                    # Bellman's equations denoting Q-V relation
                     qval += self.P_function(s, a, s_)*(self.R_function(s, a, s_) + self.gamma*V[s_])
 
                 Q[(s,a)] = qval
 
-        # print(V, Q)
-
         return V, Q
 
 
-    def policy_iteration(self):
+    def policy_iteration(self, pi_0=None):
         """
+        Args:
+            pi_0 (dict): initial policy
+
         Returns:
             pi_star (dict)
         """
-        pi = {s:self.actions[0] for s in self.states}
+
+        # if starting policy not give, choose first action for each state for initial policy (arbitrary choice)
+        if pi_0 is None:
+            pi = {s:self.actions[0] for s in self.states}
+    
+        # to store optimal value function
         V_star = {}
 
-        # i = 0
-
         while True:
-            # i += 1
-            # print(i)
 
+            # evaluate policy to get Q,V
             V, Q = self.evaluate_policy(pi)
+            
+            # next policy will be pi_
             pi_ = pi.copy()
 
             for s in self.states:
                 
+                # at each state s, select action a with the highest value of Q(s,a)
                 for a in self.actions:
 
                     if Q[(s,a)] > Q[(s,pi_[s])]:
 
                         pi_[s] = a
 
+            # stop when policy does not change
             if pi==pi_:
 
                 return V, pi
 
+            # repeat the steps with the new policy if it is different
             pi = pi_
 
 
@@ -108,8 +130,14 @@ class MDP:
         Returns:
             pi_star (dict)
         """
+
+        # thresholf for convergence
         eps = 1e-6
+
+        # NSxNAxNS 3d array, R_3darray[i,j,k] = R_function(s_i,a_j,s_k)
         R_3darray = np.zeros((self.NS,self.NA,self.NS))
+        
+        # NSxNAxNS 3d array, P_3darray[i,j,k] = P_function(s_i,a_j,s_k)
         P_3darray = np.zeros((self.NS,self.NA,self.NS))
 
         for si, s in enumerate(self.states):
@@ -121,42 +149,36 @@ class MDP:
                     R_3darray[si,ai,si_] = self.R_function(s, a, s_)
                     P_3darray[si,ai,si_] = self.P_function(s, a, s_)
 
+        # initial estimate of optimal value (H=0)
         V = np.zeros(self.NS)
 
         while True:
 
-            # print(V)
-
+            # Bellman optimality operator / Bellman backup
+            # sum along 2nd axis corresponds to sum over s' in Bellmans's equations; returns NSxNA matrix
+            # matrix dot product also corresponds to sum over s'; returns NSxNA matrix
+            # max along 1st axis corresponds to sum over a  in Bellmans's equations; returns NS length vector
             V_ = ((P_3darray*R_3darray).sum(axis=2) + self.gamma*(P_3darray.dot(V))).max(axis=1)
 
+            # stop when V does not change much
             if np.abs(V_-V).max() < eps:
                 break
 
             V = V_
 
-
-        # Q = {}
-
-        # for si, s in enumerate(self.states):
-
-        #   for ai, a in enumerate(self.actions):
-                                
-        #       Q[(s,a)] = P_3darray[si,ai,:].dot(R_3darray[si,ai,:]+self.gamma*V)
-
+        # V onverges to the optimal value function
         V_star = dict(zip(self.states, V))
         
+        # getting pi_star (as an array) from v_star using argmax instead of max
         pi_star = ((P_3darray*R_3darray).sum(axis=2) + self.gamma*(P_3darray.dot(V))).argmax(axis=1)
+        # converting pi_star to dict
         pi_star = {self.states[i]:self.actions[pi_star[i]] for i in range(self.NS)}
 
-        # print(pi_star)
-        
         return V_star, pi_star
 
 
 
 
-
-# test
 if __name__ == "__main__":
 
     states = list(range(10))
