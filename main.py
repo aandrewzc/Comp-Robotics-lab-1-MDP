@@ -344,3 +344,98 @@ if __name__ == "__main__":
 
     # spot = np.array([(1,1,1),(1,2,2),(1,3,3),(2,3,5,),(2,4,10),(3,4,12),(3,5,4)])
     # plotter(spot)
+
+    
+    
+    
+    
+    
+
+
+##################
+# work in progress
+# 4abc
+
+
+def determine_next_state ( s,a) :
+    
+    #args: 
+        #state, action
+        
+        #given state and action, deduce s_ where you'll end up at
+        #3 s_ for each s, a pair
+        
+    result = [] 
+    
+    #if doesn't move
+    if (a[0] == 0):
+        s_next = next_state_no_error(s, a)
+        result = [s_next]
+    
+    #if moves
+    else: 
+        s_left = (s[0], s[1], s[2]-1) 
+        s_right = (s[0], s[1], s[2]+1)
+
+        # Compute all possible next states
+        s_next = next_state_no_error(s, a)
+        s_next_left = next_state_no_error(s_left, a)
+        s_next_right = next_state_no_error(s_right, a)
+        
+        result = [s_next, s_next_left, s_next_right]
+        
+    return result
+        
+        
+
+
+
+
+
+    
+def value_iteration ( policy, p_error = 0, gamma = 0.9, eps = 10e-5 ):
+    
+    
+    #value function 
+    V = {}
+    for s in S: 
+        V[s] = 0.0
+    Q = []
+    
+    while True:
+        
+        error = {}
+        
+        for s in S: # for all s <- S
+            
+            for a in A: # for all a <- A
+                
+                #Q(s,a) = (P(s'|s,a))(r|s') + gamma* SUM_over_s' V(s'))
+                
+                Q_temp = 0.0
+                
+                #for each a there are 3 s_
+                for s_ in determine_next_state(s,a):
+                    Q_temp += P_function(s, a, s_)*(R_function(s, a, s+) + gamma*V[s_])
+                    
+#get reward when you leave
+
+                Q += [Q_temp]
+                
+            error[s] = abs(np.amax(np.array(Q)) - V[s])
+    
+            V[s] = np.amax(np.array(Q))
+            
+            #Q is 1d array
+            #gives max arg (a) of Q as tuple of a, set as policy
+            Q = np.array(Q)
+            policy[s] = A[Q.argmax()]
+            
+            #policy[s] = (unravel_index(Q.argmax(), a.shape)[3], unravel_index(Q.argmax(), a.shape)[4])
+            
+        if (max(error.values()) < eps):
+            break
+            
+    return V, policy
+  
+
