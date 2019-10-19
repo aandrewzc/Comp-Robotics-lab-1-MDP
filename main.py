@@ -157,14 +157,60 @@ def next_state_draw(s, a):
     return next_states[si_]
 
 
-def plotter(spot):
-    #x = [1,2,3]
+def trajectory(s_0, policy):
+    
+    # plotting trajectory given starting state s_0 and policy 
+    
+    timeStep = 0
+    
+    state = s_0
+    
+    if (s_0[0] >= W) or (s_0[1] >= L):
+        raise ValueError("initial state out of bounds!")
+        
+    #footsteps
+    spot = [] 
+    
+    #maximum iterations
+    maxTime = 1000000
+    while (timeStep < maxTime):
+        
+        spot +=[state]
+        
+        #win!
+        if (s_0[0] == 5 and s_0[1] == 6):
+            break
+            
+        action = policy[state]
+        
+        #if you don't do anything, you'll get stuck in the state forever (infinite loop)
+        if (action == (0,0)):
+            break
+
+        state = next_state_draw(state, action)
+    
+        timeStep+=1
+        
+    print("This Journey took", timeStep," time steps!")
+    
+    if (maxTime == timeStep):
+        raise ValueError("Solution doesn't converge!")
+    
+    if ((state[0], state[1]) ==(5,6)):
+        print("You Reached Destination!")
+    else: 
+        print("You never reached destination!")
+        
+        
+        
+  
     fig = plt.figure(figsize = (L,W))
     ax = fig.add_subplot(1,1,1)
     spot_x_y = []
     for i in spot:
         spot_x_y += [(i[0]+0.5,i[1]+0.5)]
         ax.arrow(i[0]+0.5,i[1]+0.5, 0.5*np.sin(i[2]*np.pi/6),0.5*np.cos(i[2]*np.pi/6), head_width = 0.1, head_length = 0.2, fc = 'k', ec = 'k')
+
     
     spot_x_y = np.array(spot_x_y)
     
@@ -188,7 +234,8 @@ def plotter(spot):
     plt.grid()
     plt.savefig("fig.jpg", dpi = 300)
     plt.show()
-
+    
+    return 0
 
 def inital_policy():
     pi_0 = {}
