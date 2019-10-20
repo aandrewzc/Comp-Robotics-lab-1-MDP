@@ -456,8 +456,9 @@ if __name__ == "__main__":
     mdp = MDP(states, actions, P_function, R_function, gamma)
 
     # 3d
-    V_pi_0, Q_pi_0 = mdp.evaluate_policy(pi_0)
     print("(Q 3d)")
+    print("Performing policy evaluation...")
+    V_pi_0, Q_pi_0 = mdp.evaluate_policy(pi_0)
     print("Values of some states for the initial policy:-")
     for i in range(5):
         s = choice(states)
@@ -480,7 +481,26 @@ if __name__ == "__main__":
 
     # 3f
     print("(Q 3f)")
-    
+    pi_0_new = mdp.create_policy(V_pi_0)
+    print("Testing if this function returns the initial policy back:-")
+    print("pi_0_new==pi_0?", pi_0_new==pi_0)
+    if pi_0_new != pi_0:
+        diffs = []
+        for s in states:
+            diffs.append(np.abs(Q_pi_0[(s,pi_0[s])] - Q_pi_0[(s,pi_0_new[s])]))
+
+        print("Max difference between values of two policies:", np.max(diffs))
+
+    print()
+
+    print("(Q 3g)")
+    print("Performing policy iteration...")
+    V_star_PI, pi_star_PI = mdp.policy_iteration(pi_0=pi_0)
+
+    print() 
+
+
+
 
     # pi_star = mdp.value_iteration()
 

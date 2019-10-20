@@ -123,7 +123,7 @@ class MDP:
                     pi[s] = a
 
         return pi
-        
+
 
     def policy_iteration(self, pi_0=None):
         """
@@ -142,6 +142,9 @@ class MDP:
         V_star = {}
 
         while True:
+
+            # to show progress
+            print(".", end="")
 
             # evaluate policy to get Q,V
             V, Q = self.evaluate_policy(pi)
