@@ -83,6 +83,48 @@ class MDP:
         return V, Q
 
 
+    def create_policy(self, V):
+        """
+        Args:
+            V (dict)
+
+        Returns:
+            pi in the form of a dict mapping states to actions
+        """
+
+        # action-value function
+        Q = {}
+
+        for s in self.states:
+
+            for a in self.actions:
+                
+                qval = 0
+                
+                for s_ in self.states:
+
+                    # Bellman's equations denoting Q-V relation
+                    qval += self.P_function(s, a, s_)*(self.R_function(s, a, s_) + self.gamma*V[s_])
+
+                Q[(s,a)] = qval
+
+        # policy that will be returned
+        pi = {}
+
+        # for each state s, find action a such that Q(s,a) is closest to V(s) 
+        for s in self.states:
+
+            pi[s] = self.actions[0]
+
+            for a in self.actions:
+
+                if np.abs(Q[(s,a)]-V[s]) < np.abs(Q[(s,pi[s])]-V[s]):
+
+                    pi[s] = a
+
+        return pi
+        
+
     def policy_iteration(self, pi_0=None):
         """
         Args:
@@ -92,7 +134,7 @@ class MDP:
             pi_star (dict)
         """
 
-        # if starting policy not give, choose first action for each state for initial policy (arbitrary choice)
+        # if starting policy not given, choose first action for each state for initial policy (arbitrary choice)
         if pi_0 is None:
             pi = {s:self.actions[0] for s in self.states}
     
@@ -155,6 +197,7 @@ class MDP:
         while True:
 
             # Bellman optimality operator / Bellman backup
+            # R and P are stored as 3d-array with {0,1,2} as axes
             # sum along 2nd axis corresponds to sum over s' in Bellmans's equations; returns NSxNA matrix
             # matrix dot product also corresponds to sum over s'; returns NSxNA matrix
             # max along 1st axis corresponds to sum over a  in Bellmans's equations; returns NS length vector

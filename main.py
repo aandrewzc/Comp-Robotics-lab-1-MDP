@@ -135,7 +135,7 @@ def next_state_no_error(s, a):
 #     return s_next
 
 def next_state_draw(s, a):
-    # Find all the next possible states, then determine which has highest probability
+    # draw a next state s', when given current state s and action a
 
     weights = []
     next_states = []
@@ -160,46 +160,47 @@ def next_state_draw(s, a):
 def trajectory(s_0, policy):
     
     # plotting trajectory given starting state s_0 and policy 
-    
-    timeStep = 0
-    
+        
     state = s_0
     
     if (s_0[0] >= W) or (s_0[1] >= L):
         raise ValueError("initial state out of bounds!")
         
     #footsteps
-    spot = [] 
+    spot = []
+    rewards = []
     
     #maximum iterations
-    maxTime = 1000000
-    while (timeStep < maxTime):
+    maxTime = 200
+    print("Simulating", maxTime," time steps...")
+    
+    for t in range(maxTime):
         
-        spot +=[state]
+        spot.append(state)
         
-        #win!
-        if (s_0[0] == 5 and s_0[1] == 6):
-            break
+        # #win!
+        # if (s_0[0] == 5 and s_0[1] == 6):
+        #     break
             
         action = policy[state]
+        # print(state, action)
         
         #if you don't do anything, you'll get stuck in the state forever (infinite loop)
-        if (action == (0,0)):
-            break
+        # if (action == (0,0)):
+        #     break
 
-        state = next_state_draw(state, action)
+        next_state = next_state_draw(state, action)
+        rewards.append(R_function(state, action, next_state))
+        state = next_state
+
     
-        timeStep+=1
-        
-    print("This Journey took", timeStep," time steps!")
+    # if (maxTime == timeStep):
+    #     raise ValueError("Solution doesn't converge!")
     
-    if (maxTime == timeStep):
-        raise ValueError("Solution doesn't converge!")
-    
-    if ((state[0], state[1]) ==(5,6)):
-        print("You Reached Destination!")
-    else: 
-        print("You never reached destination!")
+    # if ((state[0], state[1]) ==(5,6)):
+    #     print("You Reached Destination!")
+    # else: 
+    #     print("You never reached destination!")
         
         
         
@@ -235,9 +236,11 @@ def trajectory(s_0, policy):
     plt.savefig("fig.jpg", dpi = 300)
     plt.show()
     
-    return 0
+    coeffs = np.logspace(0, maxTime-1, base=gamma, num=maxTime)
+    return coeffs.dot(rewards)
 
-def inital_policy():
+
+def initial_policy():
     pi_0 = {}
     tgt = (5, 6)
 
@@ -252,7 +255,11 @@ def inital_policy():
             h_angle = np.deg2rad(30*s[2])
             my_direction = (np.sin(h_angle), np.cos(h_angle))
 
-            if my_direction[0]*tgt_direction[0] + my_direction[1]*tgt_direction[1] >= 0:
+            dotprod = my_direction[0]*tgt_direction[0] + my_direction[1]*tgt_direction[1]
+
+            if np.abs(dotprod) < 1e-6:
+                a0 = +1
+            elif dotprod > 0:
                 a0 = +1
             else:
                 a0 = -1
@@ -266,16 +273,31 @@ def inital_policy():
             l_dotprod = l_direction[0]*tgt_direction[0] + l_direction[1]*tgt_direction[1]
             r_dotprod = r_direction[0]*tgt_direction[0] + r_direction[1]*tgt_direction[1]
 
-            if l_dotprod > r_dotprod:
-                a1 = -1
-            elif l_dotprod < r_dotprod:
-                a1 = +1
-            else:
+            if np.abs(l_dotprod - r_dotprod) < 1e-6:
                 a1 = 0
+            elif l_dotprod > r_dotprod:
+                a1 = -1*a0
+            elif l_dotprod < r_dotprod:
+                a1 = +1*a0
 
         pi_0[s] = (a0, a1)
 
     return pi_0
+
+
+def check_validity():
+
+    for s in states:
+        for a in actions:
+
+            psum = 0
+            for s_ in states:
+                psum += P_function(s,a,s_)
+
+            if np.abs(psum-1.0)>1e-6:
+                print("Not valid at:", s)
+                exit(0)
+
 
 # def path_generation(policy, s0, L, W):
 #     path=[]
@@ -346,21 +368,35 @@ def inital_policy():
 gamma = 0.9
 L = 8
 W = 8
-p_error = 0.25
+p_error = 0.0
 
 if __name__ == "__main__":
 
+    p_error = 0.25
+    print("p_error set to 0.25 temporarily")
+    print()
+
     # 1a
     states = get_states()
+    print("(Q 1a)")
     print("Number of states:", len(states))
+    print("Some states:", [choice(states) for _ in range(5)])
     print()
 
     # 1b
     actions = get_actions()
+    print("(Q 1b)")
+    plt.show()
+    
     print("Number of actions:", len(actions))
+    print("Actions:", actions)
     print()
 
+    # check_validity()
+
     # 1c
+    print("(Q 1b)")
+    print("Some P entries:-")
     for i in range(5):
         s = choice(states)
         a = choice(actions)
@@ -371,23 +407,86 @@ if __name__ == "__main__":
     print()
 
     # 1d
+    print("(Q 1d)")
+    print("Some s,a,s' drawed according to P:-")
     for i in range(5):
         s = choice(states)
         a = choice(actions)
 
-        print("s =",s,", a =",a,": s_ =",s_, next_state_draw(s, a))
+        print("s =",s,", a =",a,": s' =", next_state_draw(s, a))
 
     print()
 
     # 2a
+    print("(Q 2a)")
+    print("Some R entries:-")
     for i in range(5):
         s_ = choice(states)
         print("R(", s_, "):",R_function(None, None, s_))
 
     print()
 
-    # mdp = MDP(states, actions, P_function, R_function, gamma)
+    p_error = 0.0
+    print("p_error set to 0.0")
+    print()
+
+    # 3a
+    pi_0 = initial_policy()
+    print("(Q 3a)")
+    print("Initial policy's action for some states:-")
+    for i in range(5):
+        s = choice(states)
+        print("s =", s, ": a =",pi_0[s])
+
+    print()
+
+    # 3b
+    print("(Q 3b)")
+    print("Demonstration of asked function using initial policy and (5,2,6) as start state:-")
+    trajectory((5,2,6), pi_0)
+    print()
+
+    # 3c
+    print("(Q 3c)")
+    print("Trajectory using intial policy and (1,6,6) as start state:-")
+    cum_reward = trajectory((1,6,6), pi_0)
+    print()
+
+
+    mdp = MDP(states, actions, P_function, R_function, gamma)
+
+    # 3d
+    V_pi_0, Q_pi_0 = mdp.evaluate_policy(pi_0)
+    print("(Q 3d)")
+    print("Values of some states for the initial policy:-")
+    for i in range(5):
+        s = choice(states)
+        print("s =", s, ": V(s) =",V_pi_0[s])
+
+    print()
+    print("Action values of some state-action pairs for the initial policy:-")
+    for i in range(5):
+        s = choice(states)
+        a = choice(actions)
+        print("s =", s, ", a =", a, ": V(s) =",V_pi_0[s])
+
+    print()
+
+    # 3e
+    print("(Q 3e)")
+    print("Cumulative reward for trajectory in 3c:", cum_reward)
+
+    print()
+
+    # 3f
+    print("(Q 3f)")
+    
+
     # pi_star = mdp.value_iteration()
+
+    # print(pi_star)
+
+    # print(pi_star)
 
     # spot = np.array([(1,1,1),(1,2,2),(1,3,3),(2,3,5,),(2,4,10),(3,4,12),(3,5,4)])
     # plotter(spot)
@@ -404,72 +503,34 @@ if __name__ == "__main__":
 # 4abc
 
 
-def determine_next_state ( s,a) :
+# def determine_next_state ( s,a) :
     
-    #args: 
-        #state, action
+#     #args: 
+#         #state, action
         
-        #given state and action, deduce s_ where you'll end up at
-        #3 s_ for each s, a pair
+#         #given state and action, deduce s_ where you'll end up at
+#         #3 s_ for each s, a pair
         
-    result = [] 
+#     result = [] 
     
-    #if doesn't move
-    if (a[0] == 0):
-        s_next = next_state_no_error(s, a)
-        result = [s_next]
+#     #if doesn't move
+#     if (a[0] == 0):
+#         s_next = next_state_no_error(s, a)
+#         result = [s_next]
     
-    #if moves
-    else: 
-        s_left = (s[0], s[1], s[2]-1) 
-        s_right = (s[0], s[1], s[2]+1)
+#     #if moves
+#     else: 
+#         s_left = (s[0], s[1], s[2]-1) 
+#         s_right = (s[0], s[1], s[2]+1)
 
-        # Compute all possible next states
-        s_next = next_state_no_error(s, a)
-        s_next_left = next_state_no_error(s_left, a)
-        s_next_right = next_state_no_error(s_right, a)
+#         # Compute all possible next states
+#         s_next = next_state_no_error(s, a)
+#         s_next_left = next_state_no_error(s_left, a)
+#         s_next_right = next_state_no_error(s_right, a)
         
-        result = [s_next, s_next_left, s_next_right]
+#         result = [s_next, s_next_left, s_next_right]
         
-    return result
-        
-        
-
-
-
-
-
-
-
-
-def determine_next_state ( s,a) :
-    
-    #args: 
-        #state, action
-        
-        #given state and action, deduce s_ where you'll end up at
-        #3 s_ for each s, a pair
-        
-    result = [] 
-    
-    #if doesn't move
-    if (a[0] == 0):
-        s_next = next_state_no_error(s, a)
-        result = [s_next]
-    
-    #if moves
-    else: 
-        s_left = (s[0], s[1], s[2]-1) 
-        s_right = (s[0], s[1], s[2]+1)
-
-        # Compute all possible next states
-        s_next = next_state_no_error(s, a)
-        s_next_left = next_state_no_error(s_left, a)
-        s_next_right = next_state_no_error(s_right, a)
-        
-        result = [s_next, s_next_left, s_next_right]
-        
-    return result
+#     return result
         
         
 
@@ -478,56 +539,49 @@ def determine_next_state ( s,a) :
 
 
     
-def value_iteration ( policy, p_error = 0, gamma = 0.9, eps = 10e-3 ):
+# def value_iteration ( policy, p_error = 0, gamma = 0.9, eps = 10e-5 ):
     
     
-    #value function 
-    V = {}
-    for s in S: 
-        V[s] = 0.0
+#     #value function 
+#     V = {}
+#     for s in S: 
+#         V[s] = 0.0
+#     Q = []
     
-    counter = 0
-    
-    while True:
+#     while True:
         
-        error = []
+#         error = {}
         
-        for s in S: # for all s <- S
+#         for s in S: # for all s <- S
             
-            Q = []
-            
-            for a in A: # for all a <- A
+#             for a in A: # for all a <- A
                 
-                #Q(s,a) = (P(s'|s,a))(r|s') + gamma* SUM_over_s' V(s'))
+#                 #Q(s,a) = (P(s'|s,a))(r|s') + gamma* SUM_over_s' V(s'))
                 
-                Q_temp = 0.0
-            
-                #for each a there are 3 s_
-                for s_ in determine_next_state(s,a):
-                    Q_temp += P_function(s, a, s_)*(R_function(s, a, s_) + gamma*V[s_])
+#                 Q_temp = 0.0
+                
+#                 #for each a there are 3 s_
+#                 for s_ in determine_next_state(s,a):
+#                     Q_temp += P_function(s, a, s_)*(R_function(s, a, s_) + gamma*V[s_])
                     
-#get reward when you leave
+# #get reward when you leave
 
-                Q += [Q_temp]
+#                 Q += [Q_temp]
                 
-            topQ = np.max(np.array(Q))
-            index = np.argmax(np.array(Q))
+#             error[s] = abs(np.amax(np.array(Q)) - V[s])
+    
+#             V[s] = np.amax(np.array(Q))
             
-            error += [np.amax(np.abs(np.amax(Q) - V[s]))]
+#             #Q is 1d array
+#             #gives max arg (a) of Q as tuple of a, set as policy
+#             Q = np.array(Q)
+#             policy[s] = A[Q.argmax()]
             
-            V[s] = topQ
+#             #policy[s] = (unravel_index(Q.argmax(), a.shape)[3], unravel_index(Q.argmax(), a.shape)[4])
             
-            #Q is 1d array
-            #gives max arg (a) of Q as tuple of a, set as policy
+#         if (max(error.values()) < eps):
+#             break
             
-            policy[s] = A[index]
-            
-            #policy[s] = (unravel_index(Q.argmax(), a.shape)[3], unravel_index(Q.argmax(), a.shape)[4])
-            
-        if (np.amax(np.array(error)) < eps):
-            break
-            
-        counter +=1
-    print (counter )
-    return V, policy
+#     return V, policy
   
+
