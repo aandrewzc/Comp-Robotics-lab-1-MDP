@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.pyplot as plt
 from random import choice
+import timeit
 
 def get_states():
     S = []
@@ -452,13 +453,15 @@ if __name__ == "__main__":
     cum_reward = trajectory((1,6,6), pi_0)
     print()
 
-
+    print("Initializing the MDP...")
     mdp = MDP(states, actions, P_function, R_function, gamma)
+    print("Done!")
+    print()
 
     # 3d
     print("(Q 3d)")
     print("Performing policy evaluation...")
-    V_pi_0, Q_pi_0 = mdp.evaluate_policy(pi_0)
+    V_pi_0, Q_pi_0 = mdp.evaluate_policy_accurate(pi_0)
     print("Values of some states for the initial policy:-")
     for i in range(5):
         s = choice(states)
@@ -469,13 +472,13 @@ if __name__ == "__main__":
     for i in range(5):
         s = choice(states)
         a = choice(actions)
-        print("s =", s, ", a =", a, ": V(s) =",V_pi_0[s])
+        print("s =", s, ", a =", a, ": Q(s,a) =",V_pi_0[s])
 
     print()
 
     # 3e
     print("(Q 3e)")
-    print("Cumulative reward for trajectory in 3c:", cum_reward)
+    print("Cumulative reward for the trajectory in 3c:", cum_reward)
 
     print()
 
@@ -493,16 +496,59 @@ if __name__ == "__main__":
 
     print()
 
+    # 3g
     print("(Q 3g)")
     print("Performing policy iteration...")
     V_star_PI, pi_star_PI = mdp.policy_iteration(pi_0=pi_0)
+    print("Action for some states for the policy found by policy iteration:-")
+    for i in range(5):
+        s = choice(states)
+        print("s =", s, ": a =", pi_star_PI[s])
 
-    print() 
+    print()
 
+    # 3h
+    print("(Q 3h)")
+    opt_cum_reward_PI = trajectory((1,6,6), pi_star_PI)
+    print("Cumulative reward for the trajectory just shown:", opt_cum_reward_PI)
+    print()
 
+    # 3i
+    print("(Q 3i)")
+    print("Running timeit to measure running time of policy iteration:-")
+    t = timeit.timeit(lambda: mdp.policy_iteration(pi_0=pi_0), number=3)
+    print("Time taken by policy iteration:", t,"sec")
+    print()
 
+    # 4a
+    print("(Q 4a)")
+    print("")
+    V_star_VI, pi_star_VI = mdp.value_iteration()
+    print("Action for some states for the policy found by value iteration:-")
+    for i in range(5):
+        s = choice(states)
+        print("s =", s, ": a =", pi_star_VI[s])
+    
+    print()
 
-    # pi_star = mdp.value_iteration()
+    # 4b
+    print("(Q 4b)")
+    opt_cum_reward_VI = trajectory((1,6,6), pi_star_VI)
+    print("Cumulative reward for the trajectory just shown:", opt_cum_reward_VI)
+    if np.abs(opt_cum_reward_PI - opt_cum_reward_VI) < 1e-6:
+        print("PI and VI give policies with same cumulative reward")
+    elif opt_cum_reward_VI > opt_cum_reward_PI:
+        print("Policy from PI gives higher reward")
+    else:
+        print("Policy from VI gives higher reward")
+    print()
+
+    # 4c
+    print("(Q 4c)")
+    print("Running timeit to measure running time of policy iteration:-")
+    t = timeit.timeit(lambda: mdp.value_iteration(), number=3)
+    print("Time taken by policy iteration:", t,"sec")
+    print()
 
     # print(pi_star)
 
