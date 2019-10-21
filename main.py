@@ -185,7 +185,7 @@ def next_state_draw(s, a):
     return next_states[si_]
 
 
-def trajectory(s_0, policy):
+def trajectory(s_0, policy, fname):
     
     # plotting trajectory given starting state s_0 and policy 
         
@@ -243,7 +243,7 @@ def trajectory(s_0, policy):
 
         a = policy[i]
         if a != (0,0):
-            shape = ["left", "full", "right"][a[1]+1]
+            shape = ["right", "full", "left"][a[1]+1]
             nh = (i[2]+3-3*a[0])%12
             ax.arrow(i[0]+0.5,i[1]+0.5, 0.5*np.sin(nh*np.pi/6),0.5*np.cos(nh*np.pi/6), shape=shape, head_width = 0.2, head_length = 0.2, fc = 'k', ec = 'k')
     
@@ -269,7 +269,6 @@ def trajectory(s_0, policy):
     plt.yticks(np.arange(L), [str(x)+"\n\n\n\n\n" for x in range(L)])
     plt.ylim([0,L])
     plt.grid()
-    plt.savefig("fig.jpg", dpi = 300)
     plt.show()
     
     coeffs = np.logspace(0, maxTime-1, base=gamma, num=maxTime)
