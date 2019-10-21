@@ -265,6 +265,8 @@ def trajectory(s_0, policy):
             if (i == 5 and j ==6):
                 ax.add_patch(plt.Rectangle((i,j), width = 1, height = 1, angle=0.0, fill = True, facecolor = 'g', alpha = 0.7))
     plt.xlim([0,W])
+    plt.xticks(np.arange(W), ["                  "+str(x) for x in range(W)])
+    plt.yticks(np.arange(L), [str(x)+"\n\n\n\n\n" for x in range(L)])
     plt.ylim([0,L])
     plt.grid()
     plt.savefig("fig.jpg", dpi = 300)
