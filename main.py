@@ -185,7 +185,7 @@ def next_state_draw(s, a):
     return next_states[si_]
 
 
-def trajectory(s_0, policy, fname):
+def trajectory(s_0, policy):
     
     # plotting trajectory given starting state s_0 and policy 
         
