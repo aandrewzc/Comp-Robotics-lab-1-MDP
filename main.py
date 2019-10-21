@@ -185,7 +185,7 @@ def next_state_draw(s, a):
     return next_states[si_]
 
 
-def trajectory(s_0, policy, debug=False):
+def trajectory(s_0, policy):
     
     # plotting trajectory given starting state s_0 and policy 
         
@@ -218,8 +218,6 @@ def trajectory(s_0, policy, debug=False):
         #     break
 
         next_state = next_state_draw(state, action)
-        if debug:
-            print(state, action, next_state, mdp.R_function(state, action, next_state))
         rewards.append(mdp.R_function(state, action, next_state))
         state = next_state
 
@@ -241,17 +239,22 @@ def trajectory(s_0, policy, debug=False):
     spot_x_y = []
     for i in spot:
         spot_x_y += [(i[0]+0.5,i[1]+0.5)]
-        ax.arrow(i[0]+0.5,i[1]+0.5, 0.5*np.sin(i[2]*np.pi/6),0.5*np.cos(i[2]*np.pi/6), head_width = 0.1, head_length = 0.2, fc = 'k', ec = 'k')
+        ax.arrow(i[0]+0.5,i[1]+0.5, 0.2*np.sin(i[2]*np.pi/6),0.2*np.cos(i[2]*np.pi/6), head_width = 0.1, head_length = 0.1, fc = 'b', ec = 'b')
 
+        a = policy[i]
+        if a != (0,0):
+            shape = ["left", "full", "right"][a[1]+1]
+            nh = (i[2]+3-3*a[0])%12
+            ax.arrow(i[0]+0.5,i[1]+0.5, 0.5*np.sin(nh*np.pi/6),0.5*np.cos(nh*np.pi/6), shape=shape, head_width = 0.2, head_length = 0.2, fc = 'k', ec = 'k')
     
     spot_x_y = np.array(spot_x_y)
     
     #plot path
-    plt.plot(*spot_x_y.T, color = 'b')
+    plt.plot(*spot_x_y.T, color = 'g', linewidth=0.5)
     
     #plot robot + orientation
     for i in spot:
-        plt.plot(i[0]+0.5, i[1]+0.5, marker=(3, 0, 0), markersize=20,markeredgewidth=1,markeredgecolor='b', markerfacecolor='None')
+        plt.plot(i[0]+0.5, i[1]+0.5, marker="o", markersize=20,markeredgewidth=1,markeredgecolor='b', markerfacecolor='None')
         
     for i in range(0,8):
         for j in range(0,8):
@@ -599,7 +602,7 @@ if __name__ == "__main__":
         print("s =", s, ": pi*[s] =", pi_star_PI_5a[s], ", V*[s] =", V_star_PI_5a[s])
 
     print()
-    opt_cum_reward_PI_5a = trajectory((1,6,6), pi_star_PI_5a, debug=True)
+    opt_cum_reward_PI_5a = trajectory((1,6,6), pi_star_PI_5a)
     print("Cumulative reward for the trajectory just shown:", opt_cum_reward_PI_5a)
     print()
 
