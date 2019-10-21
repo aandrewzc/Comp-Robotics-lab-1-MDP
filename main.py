@@ -2,8 +2,12 @@ from mdp import *
 import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.pyplot as plt
+import random
 from random import choice
 import timeit
+
+np.random.seed(305353660)
+random.seed(305353660)
 
 def get_states():
     S = []
@@ -27,14 +31,14 @@ def P_function(s, a, s_):
     Returns probability of reaching state s_,  given current state, and an action 
     Errors can happen if the robot pre-rotates left or right
     """
-    # if a[0] == 0:
-    #     # If no movement occurs, the current state must equal the next state
-    #     if s == s_:
-    #         prob = 1.0
-    #     else:
-    #         prob = 0.0
+    if a == (0,0):
+        # If no movement occurs, the current state must equal the next state
+        if s == s_:
+            prob = 1.0
+        else:
+            prob = 0.0
 
-    # # Errors may happen if movement occurs
+    # Errors may happen if movement occurs
     # else:
         # New initial states with pre-rotation error
     s_left = (s[0], s[1], s[2]-1) 
@@ -67,6 +71,29 @@ def R_function(s, a, s_):
         
     #win!
     if (s_x == 5 and s_y == 6):
+        return 1
+    
+    #boundary 
+    if (s_x == 0 or s_x == W-1 or s_y == 0 or s_y == L-1):
+        return -100
+    
+    #lane marker
+    if ((s_x == 3 and s_y == 4) or (s_x == 3 and s_y == 5) or (s_x == 3 and s_y == 6)): 
+        return -10
+    return 0
+
+
+def new_R_function(s, a, s_):
+    
+    s_x = s_[0]
+    s_y = s_[1]
+    h = s_[2]
+
+    if ( s_x >= L or s_y >= W or s_x<0 or s_y<0): 
+        raise ValueError("Exceed World Size")
+        
+    #win!
+    if (s_x == 5 and s_y == 6 and h==6):
         return 1
     
     #boundary 
@@ -149,7 +176,7 @@ def next_state_draw(s, a):
 
     # print(weights)
     # print(next_states)
-    assert(sum(weights) == 1.0)
+    assert(np.abs(sum(weights)-1.0) < 1e-6)
 
     si_ = np.random.choice(range(len(next_states)), 1, weights)[0]
     # print(si_)
@@ -191,7 +218,7 @@ def trajectory(s_0, policy):
         #     break
 
         next_state = next_state_draw(state, action)
-        rewards.append(R_function(state, action, next_state))
+        rewards.append(mdp.R_function(state, action, next_state))
         state = next_state
 
     
@@ -370,11 +397,12 @@ gamma = 0.9
 L = 8
 W = 8
 p_error = 0.0
+mdp = None
 
 if __name__ == "__main__":
 
     p_error = 0.25
-    print("p_error set to 0.25 temporarily")
+    print("p_error set to 0.25 temporarily for demo purpose")
     print()
 
     # 1a
@@ -428,7 +456,12 @@ if __name__ == "__main__":
     print()
 
     p_error = 0.0
-    print("p_error set to 0.0")
+    print("p_error set back to 0.0")
+    print()
+
+    print("Initializing the MDP with p_error =",p_error,"...")
+    mdp = MDP(states, actions, P_function, R_function, gamma)
+    print("Done!")
     print()
 
     # 3a
@@ -451,11 +484,6 @@ if __name__ == "__main__":
     print("(Q 3c)")
     print("Trajectory using intial policy and (1,6,6) as start state:-")
     cum_reward = trajectory((1,6,6), pi_0)
-    print()
-
-    print("Initializing the MDP...")
-    mdp = MDP(states, actions, P_function, R_function, gamma)
-    print("Done!")
     print()
 
     # 3d
@@ -500,10 +528,10 @@ if __name__ == "__main__":
     print("(Q 3g)")
     print("Performing policy iteration...")
     V_star_PI, pi_star_PI = mdp.policy_iteration(pi_0=pi_0)
-    print("Action for some states for the policy found by policy iteration:-")
+    print("Actions and values for some states for the policy found by policy iteration:-")
     for i in range(5):
         s = choice(states)
-        print("s =", s, ": a =", pi_star_PI[s])
+        print("s =", s, ": pi*[s] =", pi_star_PI[s], ", V*[s] =", V_star_PI[s])
 
     print()
 
@@ -516,7 +544,7 @@ if __name__ == "__main__":
     # 3i
     print("(Q 3i)")
     print("Running timeit to measure running time of policy iteration:-")
-    t = timeit.timeit(lambda: mdp.policy_iteration(pi_0=pi_0), number=3)
+    t = timeit.timeit(lambda: mdp.policy_iteration(pi_0=pi_0), number=3)/3
     print("Time taken by policy iteration:", t,"sec")
     print()
 
@@ -524,10 +552,10 @@ if __name__ == "__main__":
     print("(Q 4a)")
     print("")
     V_star_VI, pi_star_VI = mdp.value_iteration()
-    print("Action for some states for the policy found by value iteration:-")
+    print("Actions and values for some states for the policy found by value iteration:-")
     for i in range(5):
         s = choice(states)
-        print("s =", s, ": a =", pi_star_VI[s])
+        print("s =", s, ": pi*[s] =", pi_star_VI[s], ", V*[s] =", V_star_VI[s])
     
     print()
 
@@ -537,6 +565,8 @@ if __name__ == "__main__":
     print("Cumulative reward for the trajectory just shown:", opt_cum_reward_VI)
     if np.abs(opt_cum_reward_PI - opt_cum_reward_VI) < 1e-6:
         print("PI and VI give policies with same cumulative reward")
+        if pi_star_PI != pi_star_VI:
+            print("However, the policies we get from these are different")
     elif opt_cum_reward_VI > opt_cum_reward_PI:
         print("Policy from PI gives higher reward")
     else:
@@ -545,21 +575,78 @@ if __name__ == "__main__":
 
     # 4c
     print("(Q 4c)")
-    print("Running timeit to measure running time of policy iteration:-")
-    t = timeit.timeit(lambda: mdp.value_iteration(), number=3)
+    print("Running timeit to measure running time of value iteration:-")
+    t = timeit.timeit(lambda: mdp.value_iteration(), number=3)/3
     print("Time taken by policy iteration:", t,"sec")
     print()
 
-    # print(pi_star)
-
-    # print(pi_star)
-
-    # spot = np.array([(1,1,1),(1,2,2),(1,3,3),(2,3,5,),(2,4,10),(3,4,12),(3,5,4)])
-    # plotter(spot)
-
+    p_error = 0.25
+    print("Initializing the MDP with p_error =",p_error,"...")
+    mdp = MDP(states, actions, P_function, R_function, gamma)
+    print("Done!")
+    print()
     
-    
-    
+    # 5a
+    print("(Q 5a)")
+    print("Performing policy iteration...")
+    V_star_PI_5a, pi_star_PI_5a = mdp.policy_iteration(pi_0=pi_0)
+    print("Actions and values for some states for the policy found by policy iteration:-")
+    for i in range(5):
+        s = choice(states)
+        print("s =", s, ": pi*[s] =", pi_star_PI_5a[s], ", V*[s] =", V_star_PI_5a[s])
+
+    print()
+    opt_cum_reward_PI_5a = trajectory((1,6,6), pi_star_PI_5a)
+    print("Cumulative reward for the trajectory just shown:", opt_cum_reward_PI_5a)
+    print()
+
+    # 5b
+    print("(Q 5b)")
+
+    p_error = 0.0
+    print("Initializing the MDP with new reward function and p_error =",p_error,"...")
+    mdp = MDP(states, actions, P_function, new_R_function, gamma)
+    print("Done!")
+    print()
+
+    print("Performing policy iteration...")
+    V_star_PI_5b1, pi_star_PI_5b1 = mdp.policy_iteration(pi_0=pi_0)
+    print("Actions and values for some states for the policy found by policy iteration:-")
+    for i in range(5):
+        s = choice(states)
+        print("s =", s, ": pi*[s] =", pi_star_PI_5b1[s], ", V*[s] =", V_star_PI_5b1[s])
+
+    print()
+    opt_cum_reward_PI_5b1 = trajectory((1,6,6), pi_star_PI_5b1)
+    print("Cumulative reward for the trajectory just shown:", opt_cum_reward_PI_5b1)
+    print()
+
+    ############
+    p_error = 0.25
+    print("Initializing the MDP with new reward function and p_error =",p_error,"...")
+    mdp = MDP(states, actions, P_function, new_R_function, gamma)
+    print("Done!")
+    print()
+
+    print("Performing policy iteration...")
+    V_star_PI_5b2, pi_star_PI_5b2 = mdp.policy_iteration(pi_0=pi_0)
+    print("Actions and values for some states for the policy found by policy iteration:-")
+    for i in range(5):
+        s = choice(states)
+        print("s =", s, ": pi*[s] =", pi_star_PI_5b2[s], ", V*[s] =", V_star_PI_5b2[s])
+
+    print()
+    opt_cum_reward_PI_5b2 = trajectory((1,6,6), pi_star_PI_5b2)
+    print("Cumulative reward for the trajectory just shown:", opt_cum_reward_PI_5b2)
+    print()
+
+    # 5c
+    print("(Q 5c)")
+    print("Conclusions:-")
+    print("")
+    print()
+
+
     
     
 
