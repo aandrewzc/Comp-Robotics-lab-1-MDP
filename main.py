@@ -649,8 +649,7 @@ if __name__ == "__main__":
 
     # 5c
     print("(Q 5c)")
-    print("Conclusions:-")
-    print("")
+    print("(Answered in the report)")
     print()
 
 
