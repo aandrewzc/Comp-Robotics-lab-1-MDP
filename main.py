@@ -6,8 +6,8 @@ import random
 from random import choice
 import timeit
 
-np.random.seed(305353660)
-random.seed(305353660)
+np.random.seed(11061997)
+random.seed(11061997)
 
 def get_states():
     S = []
@@ -34,15 +34,15 @@ def P_function(s, a, s_):
     if a == (0,0):
         # If no movement occurs, the current state must equal the next state
         if s == s_:
-            prob = 1.0
+            return 1.0
         else:
-            prob = 0.0
+            return 0.0
 
     # Errors may happen if movement occurs
     # else:
         # New initial states with pre-rotation error
-    s_left = (s[0], s[1], s[2]-1) 
-    s_right = (s[0], s[1], s[2]+1)
+    s_left = (s[0], s[1], (s[2]+12-1)%12) 
+    s_right = (s[0], s[1], (s[2]+1)%12)
 
     # Compute all possible next states
     s_next = next_state_no_error(s, a)
@@ -185,7 +185,7 @@ def next_state_draw(s, a):
     return next_states[si_]
 
 
-def trajectory(s_0, policy):
+def trajectory(s_0, policy, debug=False):
     
     # plotting trajectory given starting state s_0 and policy 
         
@@ -218,8 +218,11 @@ def trajectory(s_0, policy):
         #     break
 
         next_state = next_state_draw(state, action)
+        if debug:
+            print(state, action, next_state, mdp.R_function(state, action, next_state))
         rewards.append(mdp.R_function(state, action, next_state))
         state = next_state
+
 
     
     # if (maxTime == timeStep):
@@ -313,18 +316,18 @@ def initial_policy():
     return pi_0
 
 
-def check_validity():
+# def check_validity():
 
-    for s in states:
-        for a in actions:
+#     for s in states:
+#         for a in actions:
 
-            psum = 0
-            for s_ in states:
-                psum += P_function(s,a,s_)
+#             psum = 0
+#             for s_ in states:
+#                 psum += P_function(s,a,s_)
 
-            if np.abs(psum-1.0)>1e-6:
-                print("Not valid at:", s)
-                exit(0)
+#             if np.abs(psum-1.0)>1e-6:
+#                 print("Not valid at:", s)
+#                 exit(0)
 
 
 # def path_generation(policy, s0, L, W):
@@ -424,7 +427,7 @@ if __name__ == "__main__":
     # check_validity()
 
     # 1c
-    print("(Q 1b)")
+    print("(Q 1c)")
     print("Some P entries:-")
     for i in range(5):
         s = choice(states)
@@ -596,7 +599,7 @@ if __name__ == "__main__":
         print("s =", s, ": pi*[s] =", pi_star_PI_5a[s], ", V*[s] =", V_star_PI_5a[s])
 
     print()
-    opt_cum_reward_PI_5a = trajectory((1,6,6), pi_star_PI_5a)
+    opt_cum_reward_PI_5a = trajectory((1,6,6), pi_star_PI_5a, debug=True)
     print("Cumulative reward for the trajectory just shown:", opt_cum_reward_PI_5a)
     print()
 
