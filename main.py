@@ -186,6 +186,7 @@ def next_state_draw(s, a):
 
 
 def trajectory(s_0, policy):
+    fig = plt.figure()
     
     # plotting trajectory given starting state s_0 and policy 
         
@@ -201,6 +202,8 @@ def trajectory(s_0, policy):
     #maximum iterations
     maxTime = 200
     print("Simulating", maxTime," time steps...")
+    
+    ax = fig.add_subplot(111)
     
     for t in range(maxTime):
         
@@ -233,9 +236,7 @@ def trajectory(s_0, policy):
         
         
         
-  
-    fig = plt.figure(figsize = (L,W))
-    ax = fig.add_subplot(1,1,1)
+ 
     spot_x_y = []
     for i in spot:
         spot_x_y += [(i[0]+0.5,i[1]+0.5)]
